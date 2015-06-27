@@ -17,6 +17,7 @@ module Spreadsheet
   #                   Format is stored in #formats for the cell.
   # #height::         The height of this Row in points (defaults to 12).
   class Row < Array
+    include Spreadsheet::Encodings
     include Datatypes
 
     class << self
@@ -71,23 +72,24 @@ module Spreadsheet
       super cells
       @formats = []
       @height = 12.1
+      @fmt_str_time = client('DD.MM.YYYY hh:mm:ss', 'UTF-8')
+      @fmt_str_date = client('DD.MM.YYYY', 'UTF-8')
     end
 
-    def add_cell(cell, format)
-      set_format_inline(format)
+    def add_cell(cell, format = nil)
+      set_format_inline(cell, format)
       push(cell)
     end
 
-    def set_format_inline(format)
+    def set_format_inline(value, format)
       new_formats = {}
-      fmt_str_time = client('DD.MM.YYYY hh:mm:ss', 'UTF-8')
-      fmt_str_date = client('DD.MM.YYYY', 'UTF-8')
-      unless format.date_or_time?
+      if format.nil? || !format.date_or_time?
+        format ||= self.format @idx
         numfmt = case value
                  when DateTime, Time
-                   format || fmt_str_time
+                   format || @fmt_str_time
                  when Date
-                   format || fmt_str_date
+                   format || @fmt_str_date
                  end
         case numfmt
         when Format

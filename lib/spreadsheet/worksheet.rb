@@ -175,41 +175,7 @@ module Spreadsheet
       shorten @columns
       res
     end
-    ##
-    # Formats all Date, DateTime and Time cells with _format_ or the default
-    # formats:
-    # - 'DD.MM.YYYY' for Date
-    # - 'DD.MM.YYYY hh:mm:ss' for DateTime and Time
-    def format_dates! format=nil
-      new_formats = {}
-      fmt_str_time = client('DD.MM.YYYY hh:mm:ss', 'UTF-8')
-      fmt_str_date = client('DD.MM.YYYY', 'UTF-8')
-      each do |row|
-        row.each_with_index do |value, idx|
-          unless row.formats[idx] || row.format(idx).date_or_time?
-            numfmt = case value
-                     when DateTime, Time
-                       format || fmt_str_time
-                     when Date
-                       format || fmt_str_date
-                     end
-            case numfmt
-            when Format
-              row.set_format idx, numfmt
-            when String
-              existing_format = row.format(idx)
-              new_formats[existing_format] ||= {}
-              new_format = new_formats[existing_format][numfmt]
-              if !new_format
-                new_format = new_formats[existing_format][numfmt] = existing_format.dup
-                new_format.number_format = numfmt
-              end
-              row.set_format idx, new_format
-            end
-          end
-        end
-      end
-    end
+
     ##
     # Insert a Row at _idx_ (0-based) containing _cells_
     def insert_row idx, cells=[]

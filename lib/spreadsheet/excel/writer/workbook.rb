@@ -107,7 +107,6 @@ class Workbook < Spreadsheet::Writer
     found_selected = false
     sheets.each do |sheet|
       found_selected ||= sheet.selected
-      sheet.format_dates!
     end
     unless found_selected
       sheets.first.selected = true
