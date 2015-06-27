@@ -18,6 +18,7 @@ module Spreadsheet
   # #height::         The height of this Row in points (defaults to 12).
   class Row < Array
     include Datatypes
+
     class << self
       def format_updater *keys
         keys.each do |key|
@@ -31,6 +32,7 @@ module Spreadsheet
           end
         end
       end
+
       def updater *keys
         keys.each do |key|
           ## Passing blocks to methods defined with define_method is not possible
@@ -48,15 +50,21 @@ module Spreadsheet
         end
       end
     end
+
     attr_reader :formats
     attr_accessor :idx, :height, :worksheet
+
     boolean :hidden, :collapsed
+
     enum :outline_level, 0, Integer
+
     updater :[]=, :clear, :concat, :delete, :delete_if, :fill, :insert, :map!,
             :pop, :push, :reject!, :replace, :reverse!, :shift, :slice!,
             :sort!, :uniq!, :unshift
+
     format_updater :collapsed, :height, :hidden, :outline_level
-    def initialize worksheet, idx, cells=[]
+
+    def initialize(worksheet, idx, cells=[])
       @default_format = nil
       @worksheet = worksheet
       @idx = idx
@@ -64,6 +72,39 @@ module Spreadsheet
       @formats = []
       @height = 12.1
     end
+
+    def add_cell(cell, format)
+      set_format_inline(format)
+      push(cell)
+    end
+
+    def set_format_inline(format)
+      new_formats = {}
+      fmt_str_time = client('DD.MM.YYYY hh:mm:ss', 'UTF-8')
+      fmt_str_date = client('DD.MM.YYYY', 'UTF-8')
+      unless format.date_or_time?
+        numfmt = case value
+                 when DateTime, Time
+                   format || fmt_str_time
+                 when Date
+                   format || fmt_str_date
+                 end
+        case numfmt
+        when Format
+          row.set_format idx, numfmt
+        when String
+          existing_format = row.format(idx)
+          new_formats[existing_format] ||= {}
+          new_format = new_formats[existing_format][numfmt]
+          if !new_format
+            new_format = new_formats[existing_format][numfmt] = existing_format.dup
+            new_format.number_format = numfmt
+          end
+          row.set_format idx, new_format
+        end
+      end
+    end
+
     ##
     # The default Format of this Row, if you have set one.
     # Returns the Worksheet's default or the Workbook's default Format otherwise.
