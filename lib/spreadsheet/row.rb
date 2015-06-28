@@ -82,28 +82,36 @@ module Spreadsheet
     end
 
     def set_format_inline(value, format)
-      new_formats = {}
-      if format.nil? || !format.date_or_time?
-        format ||= self.format @idx
+      if format
+        set_format(format, @idx)
+        return
+      end
+
+      # Only validating date/time objects have a proper formatting
+      # that Excel will accept. Anything else the default formatter
+      # will handle
+      #
+      unless value.kind_of?(DateTime) || value.kind_of?(Date) || value.kind_of?(Time)
+        return
+      end
+
+      default_format = self.format(@idx)
+      unless default_format.date_or_time?
+        #TODO:
+        # default_format and format have slightly different logic
+        # which seems wrong. Unify so that we don't need to do a row
+        # lookup when we're in fact setting the format
+
         numfmt = case value
                  when DateTime, Time
-                   format || @fmt_str_time
+                   @fmt_str_time
                  when Date
-                   format || @fmt_str_date
+                   @fmt_str_date
                  end
-        case numfmt
-        when Format
-          row.set_format idx, numfmt
-        when String
-          existing_format = row.format(idx)
-          new_formats[existing_format] ||= {}
-          new_format = new_formats[existing_format][numfmt]
-          if !new_format
-            new_format = new_formats[existing_format][numfmt] = existing_format.dup
-            new_format.number_format = numfmt
-          end
-          row.set_format idx, new_format
-        end
+
+        new_format = default_format.dup
+        new_format.number_format = numfmt
+        set_format @idx, new_format
       end
     end
 
@@ -130,8 +138,8 @@ module Spreadsheet
     # The Format for the Cell at _idx_ (0-based), or the first valid Format in
     # Row#default_format, Column#default_format and Worksheet#default_format.
     def format idx
-      @formats[idx] || @default_format \
-        || @worksheet.column(idx).default_format if @worksheet
+      @formats[idx] || default_format ||
+        @worksheet.column(idx).default_format if @worksheet
     end
     ##
     # Returns a copy of self with nil-values appended for empty cells that have
