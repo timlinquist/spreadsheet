@@ -12,3 +12,6 @@ PLATFORMS
 DEPENDENCIES
   hoe (>= 3.4)
   ruby-ole
+
+BUNDLED WITH
+   1.10.4
