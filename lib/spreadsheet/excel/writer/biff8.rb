@@ -14,6 +14,8 @@ module Biff8
   # is a Null-byte) and perform compression.
   # Returns the data and compression_status (0/1)
   def compress_unicode_string data
+    return data unless data.size % 2 == 0
+
     compressed = data.delete("\000")
 
     if compressed.size == data.size / 2
