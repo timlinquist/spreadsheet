@@ -15,8 +15,9 @@ module Biff8
   # Returns the data and compression_status (0/1)
   def compress_unicode_string data
     return data unless data.size % 2 == 0
+    escape_null_char_ascii = "\000"
 
-    compressed = data.delete("\000")
+    compressed = data.delete(escape_null_char_ascii)
 
     if compressed.size == data.size / 2
       [compressed, 0] # Data consists of compressed chars
